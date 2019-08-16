@@ -1,0 +1,33 @@
+{
+  "par_general": {
+    "outdir": "/scratch/saudat/2_groups_1000_bootstraps/output",
+    "maxCoresPerRule": 16,
+    "dir_TFBS_sorted": false,
+    "regionExtension": 100,
+    "comparisonType": "age",
+    "conditionComparison": "Young,Old",
+    "designContrast": "~sex+conditionSummary",
+    "designVariableTypes": "sex:factor,conditionSummary:factor",
+    "nPermutations": 0,
+    "nBootstraps": 1000,
+    "nCGBins": 10,
+    "TFs": "all",
+    "dir_scripts": "/g/scb2/zaugg/carnold/Projects/diffTF/src/R",
+    "RNASeqIntegration": false
+  },
+  "samples": {
+    "summaryFile": "sampleData.tsv",
+    "pairedEnd": true
+  },
+  "peaks": {
+    "consensusPeaks": "",
+    "peakType": "bed",
+    "minOverlap": 3
+  },
+  "additionalInputFiles": {
+    "refGenome_fasta": "/g/scb2/zaugg/zaugg_shared/annotations/hg19/referenceGenome/Bowtie2/hg19.fa",
+    "dir_TFBS": "/g/scb2/zaugg/zaugg_shared/annotations/TFBS/hg19/HOCOMOCO_v10",
+    "RNASeqCounts": "",
+    "HOCOMOCO_mapping": "/g/scb2/zaugg/carnold/Projects/diffTF/src/TF_Gene_TranslationTables/HOCOMOCO_v10/translationTable_hg19.csv"
+  }
+}
