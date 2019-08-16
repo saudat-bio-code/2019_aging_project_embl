@@ -1,0 +1,159 @@
+---
+title: "HSC"
+output: html_document
+---
+
+ ---
+title: "R Notebook"
+o utput:
+  html_document:
+    df_print: paged
+editor_options:
+  chunk_output_type: console
+---
+### Loading the packages
+```{r}
+library(DiffBind)
+library(DESeq2)
+library(cluster)
+library(ggplot2)
+library(RColorBrewer)
+library(tidyverse)
+library(csaw)
+library(pheatmap)
+library(limma)
+library(tidyr)
+```
+
+### Read the data
+```{r}
+library(readr)
+ATAC_D = readRDS("ATAC_Seq_groups_all_batches_03_2019_withFileInformation3")
+View(ATAC_D)
+```
+
+
+### Make DBA object for diffbind
+```{r}
+ATAC_D$PeakCaller = "bed"
+ATAC_D$Replicate<-"1"
+ATAC_D$Condition = ifelse(ATAC_D$age < 60, "Young", "Old")
+
+
+# ifelse example
+# df$newcolumn = ifelse(is.na(df$names), "NA", ifelse(df$favouriteColor =="black", "black", "otherColor"))
+
+ATAC_D$Factor = "ATAC"
+names(ATAC_D)[names(ATAC_D) == "peakFile"] <- "Peaks"
+names(ATAC_D)[names(ATAC_D) == "bamFile"] <- "bamReads"
+#adding a column with gender + sequencing batch that will be later used in design formula for deseq2 analysis
+ATAC_D<-unite(ATAC_D,Batch_effect, sex, Batch, remove = FALSE)
+View(ATAC_D$Batch_effect)#check if it worked
+
+dba_D= dba(sampleSheet = ATAC_D)
+```
+
+### Examine dba object
+```{r}
+print(dba_D) 
+olap.rate = dba.overlap(dba_D, mode = DBA_OLAP_RATE)
+plot(olap.rate, main = "overlap rate of HSC peaks") 
+plot(dba_D, main = "initial clustering of HSC peaks")
+```
+
+
+
+```{r}
+#generating consensus peaks for ATAC_D
+consensusD = dba.count(DBA = dba_D, summits = 250, score = DBA_SCORE_READS, minOverlap = 2)
+dds = dba.peakset(consensus, bRetrieve = T, DataType = DBA_DATA_FRAME)
+coords = as.data.frame(dds[,1:3], stringsAsFactors = F) # retrieve coordinates
+coords$id = paste0(coords[,1], "_", coords[,2], "_", coords[,3])
+rownames(dds) = coords$id
+colnames(dds) = unlist(sapply(X = colnames(dds), FUN = function(x) gsub(pattern = "X", replacement = "", x = x)))
+counts = as.matrix(dds[,4:ncol(dds)])
+rownames(ATAC_D) = 1:nrow(ATAC_D)
+```
+
+### Run DESeq2
+```{r}
+dds = DESeqDataSetFromMatrix(counts, colData = ATAC_D, design = ~ Batch_effect + Condition) 
+# Batch_effect refers to sex and sequencing batch from the metadata
+```
+
+### If the MA plot looks good, proceed directly to differential peak analysis
+```{r}
+message("\nrunning DESeq2...\n")
+dds = DESeq(dds, test = "LRT", reduced=~Batch_effect) # We deviate from the standard workflow here to run likelihood ratio test to account for the different age groups
+message("\nDESeq2 completed\n")
+res = results(dds, contrast = c("Condition","Young","Old"))   
+DESeq2::plotMA(res) # examine distribution of the fold change in dataset
+
+```
+
+
+
+
+
+
+### Not necessary if the distribution of log fold change vs mean normalised counts look normal in the MA plot
+```{r}
+
+normFacs = exp(normOffsets(counts1, lib.sizes=colSums(counts1), type="loess")) # Loess regression 
+normalizationFactors(ddsM1) = normFacs #  run DESeq again using the new normalisation factor
+
+message("\nrunning DESeq2...\n")
+ddsM1Norm = DESeq(ddsM1, test = "LRT", reduced=~Batch) # We deviate from the standard workflow here to run likelihood ratio test to account for the different age groups
+message("\nDESeq2 completed\n")
+plotMA(ddsM1Norm) # examine distribution of the fold change in dataset
+```
+
+
+
+### We can examine the differential peaks using a heatmap
+```{r}
+vsd = vst(ddsM1, blind = FALSE) # first transform the data
+
+df <- as.data.frame(colData(ddsM1)[,c("Condition","sex", "age", "SampleID", "Batch")], stringsAsFactors = FALSE)
+
+rownames(df) = paste0(df$SampleID, "_", df$age)
+df = df[,c("Batch", "age", "Condition")]
+count.matrix <- removeBatchEffect(assay(vsd), batch = colData(ddsM1)$Batch, design = model.matrix( ~ colData(ddsM1)$Condition))
+
+# generate Z-scores from counts
+Means.vsd = rowMeans(count.matrix)
+SD.vsd = rowSds(count.matrix)
+norm.vsd = (count.matrix - Means.vsd) / SD.vsd
+colnames(norm.vsd) = rownames(df)
+norm.vsd = norm.vsd[,order(sapply(strsplit(colnames(norm.vsd), "_"), "[", 4))]
+
+res = results(dds, contrast = c("Condition", "from_50_to_65", "older_than_65")) #  specify fold change order Old/Young
+select_005 = order(res$padj)[1:length(which(res$padj < 0.05))] # choose p adjusted value as the FDR cut off
+
+x = norm.vsd[select_005,]
+clusters = pam(x, 2) # use pam clustering here to obtain consistent clusters, you can choose the cluster number 
+x = x[names(sort(clusters$clustering)),]
+
+pheatmap(x, cluster_rows = FALSE,
+         cluster_cols = FALSE,
+         show_rownames=FALSE,
+         show_colnames = T,
+         annotation_col=df)
+```
+
+### We can examine the peaks using a PCA plot
+```{r}
+cct = assay(vsd, blind  = T)
+pvars <- rowVars(cct)
+select <- order(pvars, decreasing = TRUE)[seq_len(min(500, length(pvars)))] #  select top 500 peaks
+PCA <- prcomp(t(cct)[, select], scale = F)
+percentVar <- round(100 * PCA$sdev ^ 2/ sum(PCA$sdev ^ 2), 1)
+plotPCA.df = data.frame(PC1 = PCA$x[,1], PC2 = PCA$x[,2], PC3 = PCA$x[,3], PC4 = PCA$x[,4], sample = paste0(colData(ddsM1)$SampleID,"_", colData(ddsM1)$age), condition = as.character(colData(ddsM1)$age), batch = colData(dds)$Batch)
+
+qplot(PC1, PC2, data = plotPCA.df, color =  Condition, shape = batch, main = "PC1vsPC2 top 500 peaks", size = I(6))+ labs(x = paste0("PC1, VarExp:", round(percentVar[1],4)),  y = paste0("PC2, VarExp:", round(percentVar[2],4))) + scale_color_manual(values = colorRampPalette(brewer.pal(n = 5, name = "RdBu"))(16))+ theme_classic()
+
+
+
+```
+
+#
