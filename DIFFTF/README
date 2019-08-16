@@ -1,0 +1,4 @@
+The analysis with DiffTF software (https://difftf.readthedocs.io/en/latest/projectInfo.html)
+Important parameters:
+1. Hocomoco reference database was used for the motif predictions
+2. Analytical (bootstrapping) statistical method was applied
