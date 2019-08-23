@@ -1,0 +1,37 @@
+{
+    "__default__" :
+    {
+        "queueSLURM": "htc",
+        "group"     : "zaugg",
+        "nCPUs"     : "{threads}",
+        "memory"    : 1000,
+        "maxTime"   : "01:00:00",
+        "name"      : "GRN.{rule}.{wildcards}",
+        "output"    : "/g/scb2/zaugg/alishaye/GRNpipelineGit/output/LOGS_AND_BENCHMARKS/{rule}.out",
+        "error"     : "/g/scb2/zaugg/alishaye/GRNpipelineGit/output/LOGS_AND_BENCHMARKS/{rule}.err"
+    },
+    "uniqueTFBSPeaks":
+    {
+      "queueSLURM": "htc",
+      "maxTime"   :"01:00:00",
+      "memory"    : 5000
+    },
+    "corrTable":
+    {
+      "queueSLURM": "htc",
+      "maxTime"   :"02:00:00",
+      "memory"    : 5000
+    },
+    "GRN":
+    {
+      "queueSLURM": "htc",
+      "maxTime"   :"00:30:00",
+      "memory"    : 5000
+    },
+    "makePlots":
+    {
+      "queueSLURM": "htc",
+      "maxTime"   :"00:10:00",
+      "memory"    : 2000
+    }
+}

@@ -1,0 +1,45 @@
+{
+  "par_general":
+  {
+    "outdir"   : "/g/scb2/zaugg/alishaye/GRNpipelineGit/output",
+    "indir"   : "/g/scb2/zaugg/alishaye/GRNpipelineGit/input"
+  },
+
+  "additionalInputFiles":
+  {
+    "normATAC" : "/g/scb2/zaugg/alishaye/GRNpipelineGit/input/normalizedATAC.tsv.gz",
+    "normRNA"     : "/g/scb2/zaugg/alishaye/GRNpipelineGit/input/normalizedRNA.tsv.gz",
+    "consensus" : "/g/scb2/zaugg/alishaye/GRNpipelineGit/output/consensusPeakSet.txt",
+    "tfID"  : "/g/scb2/zaugg/zaugg_shared/annotations/TFBS/hg38/FIMO_HOCOMOCOv11/HOCOTFID2ENSEMBL.txt",
+    "samples" : "/g/scb2/zaugg/alishaye/GRNpipelineGit/input/allsamples.txt",
+    "metadata"  : "/g/scb2/zaugg/alishaye/GRNpipelineGit/input/metadata.txt"
+  },
+
+  "Rscripts":
+  {
+    "df_peaksTF" : "/g/scb2/zaugg/palla/Projects/TREG/GRN_snakemake/input/Rscripts/df_TFpeaks.R",
+    "compute_corr"     : "/g/scb2/zaugg/palla/Projects/TREG/GRN_snakemake/input/Rscripts/compute_corr.R",
+    "corr_FINAL"     : "/g/scb2/zaugg/palla/Projects/TREG/GRN_snakemake/input/Rscripts/corr_FINAL.R",
+    "GRN" : "/g/scb2/zaugg/palla/Projects/TREG/GRN_snakemake/input/Rscripts/GRN.R",
+    "GRN_FINAL" : "/g/scb2/zaugg/palla/Projects/TREG/GRN_snakemake/input/Rscripts/rbind_fdrCurves.R",
+    "classPlot" : "/g/scb2/zaugg/palla/Projects/TREG/GRN_snakemake/input/Rscripts/classPlot.R"
+  },
+
+  "pythonscripts":
+  {
+    "generatePeakSet" : "/g/scb2/zaugg/alishaye/GRNpipelineGit/TREG/GRN_snakemake/input/pythonscripts/generatePeakSet.py",
+    "uniqueTFBSPeaks" : "/g/scb2/zaugg/alishaye/GRNpipelineGit/TREG/GRN_snakemake/input/pythonscripts/uniqueTFBSPeaks.py"
+  },
+
+  "params":
+  {
+    "corrMethod" : "pearson",
+    "delim_tfID"  : " ",
+    "column_tfID" : "HOCOID"
+  },
+
+  "folders":
+  {
+    "GW_TFBS" : "/g/scb2/zaugg/zaugg_shared/annotations/TFBS/hg38/PWMScan_HOCOMOCOv11"
+  }
+}
